@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Sama's world</title>
+  <link rel="stylesheet" href="home.css">
+</head>
+
+<script>
+(function() {
+  const PASSWORD = "Sama still loves Aya";   // كلمة السر الصحيحة
+  const STORAGE_KEY = "mySiteAuth"; // مفتاح الحفظ
+  const DAYS_TO_REMEMBER = 7;      // كم يوم يتذكر (تقدر تغيّره)
+
+  // فحص صلاحية التخزين
+  function isRemembered() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const obj = JSON.parse(raw);
+      if (!obj.authenticated) return false;
+      if (!obj.expiry) return false;
+      const now = Date.now();
+      return now < obj.expiry;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // فعل التذكر
+  function rememberForDays(days) {
+    const expiry = Date.now() + days * 24 * 60 * 60 * 1000;
+    const obj = { authenticated: true, expiry };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  }
+
+  // مسح التذكر (لـ logout)
+  function forget() {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  // استدعاء عند التحميل
+  function initAuthFlow() {
+    // إذا متذكّر وجلسة صالحة --> نفّذ الطبيعية
+    if (isRemembered()) {
+      // وضع زر خروج بسيط أعلى الصفحة
+      addLogoutButton();
+      return; // يسمح بعرض المحتوى الطبيعي
+    }
+
+    // خلاف ذلك، اطلب كلمة السر
+    const pass = prompt("Enter password 🔒:");
+    if (pass !== PASSWORD) {
+      // منع الوصول: نمسح الـ body ونعرض رسالة
+      document.body.innerHTML = "<h1 style='font-family: Arial, sans-serif; text-align:center; padding-top:40vh;'>Access Denied 🚫</h1>";
+      return;
+    }
+
+    // إذا كانت صحيحة، اسأل المستخدم إن أراد التذكّر
+    const remember = confirm("Password correct ✅\nDo you want the browser to remember you for " + DAYS_TO_REMEMBER + " days?");
+    if (remember) {
+      rememberForDays(DAYS_TO_REMEMBER);
+    }
+
+    // بعد تسجيل الدخول بنجاح، نضيف زر خروج
+    addLogoutButton();
+  }
+
+  // زر خروج بسيط - تضيفه إلى أعلى body لتجربة سهلة
+  function addLogoutButton() {
+    try {
+      const btn = document.createElement("button");
+      btn.textContent = "Logout";
+      btn.style.position = "fixed";
+      btn.style.top = "12px";
+      btn.style.right = "12px";
+      btn.style.padding = "8px 12px";
+      btn.style. background= "rgba(144,190,109,1) ";
+      btn.style.color= "#fff";
+      btn.style.border = "none";
+      btn.style.borderRadius = "8px";
+      btn.style.cursor = "pointer";
+      btn.style.zIndex = 99999;
+      btn.addEventListener("click", function() {
+        forget();
+        // نعيد تحميل الصفحة لتطبيق الحالة غير المصرح بها
+        location.reload();
+      });
+      document.body.appendChild(btn);
+    } catch (e) {
+      // تجاهل أخطاء DOM
+      console.error(e);
+    }
+  }
+
+  // تشغيل التدفق بعد تحميل DOM (لو سكربت في أعلى)
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAuthFlow);
+  } else {
+    initAuthFlow();
+  }
+})();
+</script>
+
+<body>
+  <div class="store-container">
+    <div class="app-icon">
+      <img src="images/sama.jpg" alt="Sama's world Icon"> <!-- حطي صورتك هنا -->
+    </div>
+    <h1 class="app-name"> Sama's world</h1>
+    <p class="desc">'🎧'📺'💿'🦯'🩹'🖇'. 🍏</p>
+    <button id="download-btn">Start now</button>
+
+    <div id="progress-container" class="hidden">
+      <p id="loading-text">waite a little...</p>
+      <div class="progress-bar">
+        <div class="progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="home.js"></script>
+</body>
+</html>
